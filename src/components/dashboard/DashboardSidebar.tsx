@@ -1,0 +1,140 @@
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { 
+  LayoutDashboard, FileText, MessageSquare, Receipt, 
+  Users, Settings, BarChart3, Megaphone, Palette, 
+  UserCheck, Bell, Zap, LogOut, Target, Menu, X
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import ThemeToggle from "@/components/ThemeToggle";
+import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useAdminAuth } from "@/context/useAdminAuth";
+
+interface NavItem {
+  label: string;
+  icon: React.ElementType;
+  href: string;
+}
+
+const clientNav: NavItem[] = [
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { label: "My Projects", icon: FileText, href: "/dashboard/projects" },
+  { label: "Messages", icon: MessageSquare, href: "/dashboard/messages" },
+  { label: "Invoices", icon: Receipt, href: "/dashboard/invoices" },
+  { label: "Settings", icon: Settings, href: "/dashboard/settings" },
+];
+
+const adminNav: NavItem[] = [
+  { label: "Overview", icon: LayoutDashboard, href: "/admin" },
+  { label: "Clients", icon: Users, href: "/admin/clients" },
+  { label: "Projects", icon: FileText, href: "/admin/projects" },
+  { label: "CRM Pipeline", icon: Target, href: "/admin/crm" },
+  { label: "Ads Campaigns", icon: Megaphone, href: "/admin/ads" },
+  { label: "Design Orders", icon: Palette, href: "/admin/designs" },
+  { label: "Staff", icon: UserCheck, href: "/admin/staff" },
+  { label: "Analytics", icon: BarChart3, href: "/admin/analytics" },
+  { label: "Announcements", icon: Bell, href: "/admin/announcements" },
+  { label: "Messages", icon: MessageSquare, href: "/admin/messages" },
+  { label: "Settings", icon: Settings, href: "/admin/settings" },
+];
+
+interface DashboardSidebarProps {
+  role: "client" | "admin";
+}
+
+const DashboardSidebar = ({ role }: DashboardSidebarProps) => {
+  const location = useLocation();
+  const navItems = role === "admin" ? adminNav : clientNav;
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
+  const { logout } = useAdminAuth();
+
+  const sidebarContent = (
+    <>
+      <div className="p-5 border-b border-sidebar-border flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
+            <Zap className="w-4 h-4 text-sidebar-primary-foreground" />
+          </div>
+          <span className="font-heading font-bold text-lg text-sidebar-foreground">
+            DigiPro<span className="text-sidebar-primary">Hub</span>
+          </span>
+        </Link>
+        {isMobile && (
+          <button onClick={() => setOpen(false)} className="text-sidebar-foreground/70 hover:text-sidebar-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              onClick={() => isMobile && setOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-sidebar-accent text-sidebar-primary"
+                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="p-4 border-t border-sidebar-border space-y-1">
+        <div className="flex items-center gap-3 px-3 py-1">
+          <ThemeToggle variant="dark" />
+          <span className="text-xs text-sidebar-foreground/50">Theme</span>
+        </div>
+        <Link
+          to="/"
+          onClick={() => {
+            logout();
+          }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          Sign Out
+        </Link>
+      </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed top-4 left-4 z-50 w-10 h-10 rounded-lg bg-sidebar flex items-center justify-center shadow-lg border border-sidebar-border"
+        >
+          <Menu className="w-5 h-5 text-sidebar-foreground" />
+        </button>
+
+        {open && (
+          <>
+            <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setOpen(false)} />
+            <aside className="fixed inset-y-0 left-0 w-64 bg-sidebar z-50 flex flex-col shadow-2xl">
+              {sidebarContent}
+            </aside>
+          </>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <aside className="w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col">
+      {sidebarContent}
+    </aside>
+  );
+};
+
+export default DashboardSidebar;
